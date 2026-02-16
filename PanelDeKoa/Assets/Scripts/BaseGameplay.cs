@@ -6,25 +6,57 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using static UnityEngine.Rendering.DebugUI;
 
+enum PanelColours
+{
+    Red,
+    Green, 
+    Blue,
+    DarkBlue,
+    Purple,
+    Yellow,
+    None
+}
+
 public class BaseGameplay : MonoBehaviour
 {
     [SerializeField] private GameObject[] m_panelArray;
     [SerializeField] private Transform m_leftSpawnPoint;
-    [SerializeField] private int m_numberofHorizontalPanels;
-    [SerializeField] private int m_numberofVerticalPanels;
+    [SerializeField] const int m_numberofHorizontalPanels = 6;
+    [SerializeField] const int m_numberofVerticalPanels = 12;
     [SerializeField] private float m_moveTime;
 
     [SerializeField] private float m_horizontalLimits;
     [SerializeField] private float m_verticalLimitUp;
     [SerializeField] private float m_verticalLimitDown;
 
-    private int m_numberOfPixels = 16;
+    //Test
+    /*
+    private PanelColours[,] gameBoard =
+    {
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
+        {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None}
+    };
+    */
+
+    const int m_numberOfPixels = 16;
 
     private List<GameObject> m_panelsOnScreen = new List<GameObject>();
     [SerializeField] private GameObject selector1;
     [SerializeField] private GameObject selector2;
 
     [SerializeField] private GameObject testObject;
+
+    private int m_pixelsMovedUp;
 
 
     void Start()
@@ -89,7 +121,10 @@ public class BaseGameplay : MonoBehaviour
         for (int tileSpawnedCounter = 0; tileSpawnedCounter < m_numberofHorizontalPanels; tileSpawnedCounter++)
         {
             Vector3 spawnPosition = new Vector3(m_leftSpawnPoint.position.x + tileSpawnedCounter, m_leftSpawnPoint.position.y, m_leftSpawnPoint.position.z);
-            GameObject spawnedPanel = Instantiate(m_panelArray[Random.Range(0, m_panelArray.Length)], spawnPosition, Quaternion.identity);
+            int randomPanelToSpawn = Random.Range(0, m_panelArray.Length);
+
+
+            GameObject spawnedPanel = Instantiate(m_panelArray[randomPanelToSpawn], spawnPosition, Quaternion.identity);
             m_panelsOnScreen.Add(spawnedPanel);
         }
     }
@@ -102,9 +137,10 @@ public class BaseGameplay : MonoBehaviour
 
     private void VerticalMovement()
     {
-        if (m_panelsOnScreen[m_panelsOnScreen.Count -1].transform.position.y >= m_leftSpawnPoint.position.y + 1)
+        if (m_pixelsMovedUp >= m_numberOfPixels)
         {
             SpawnLine();
+            m_pixelsMovedUp = 0;
         }
         foreach(GameObject panel in m_panelsOnScreen)
         {
@@ -112,6 +148,8 @@ public class BaseGameplay : MonoBehaviour
         }
         selector1.transform.position = selector1.transform.position + new Vector3(0, selector1.transform.localScale.y / m_numberOfPixels, 0);
         selector2.transform.position = selector2.transform.position + new Vector3(0, selector2.transform.localScale.y / m_numberOfPixels, 0);
+
+        m_pixelsMovedUp++;
 
         StartCoroutine(MovementTimer());
     }
@@ -124,12 +162,16 @@ public class BaseGameplay : MonoBehaviour
             Panel2.transform.position = new Vector3(selector1.transform.position.x, selector1.transform.position.y, Panel2.transform.position.z);
             StartCoroutine(HorizontalCheckMicroPause(Panel2));
             StartCoroutine(VerticalCheckMicroPause(Panel2));
+            StartCoroutine(GravityCheckPause(selector2.transform.position));
+            StartCoroutine(GravityCheckPause(selector1.transform.position));
         }
         else if(Panel2 == null)
         {
             Panel1.transform.position = new Vector3(selector2.transform.position.x, selector2.transform.position.y, Panel1.transform.position.z);
             StartCoroutine(HorizontalCheckMicroPause(Panel1));
             StartCoroutine(VerticalCheckMicroPause(Panel1));
+            StartCoroutine(GravityCheckPause(selector2.transform.position));
+            StartCoroutine(GravityCheckPause(selector1.transform.position));
         }
         else
         {
@@ -139,15 +181,15 @@ public class BaseGameplay : MonoBehaviour
             StartCoroutine(VerticalCheckMicroPause(Panel2));
             StartCoroutine(VerticalCheckMicroPause(Panel1));
             StartCoroutine(HorizontalCheckMicroPause(Panel1));
+            StartCoroutine(GravityCheckPause(selector1.transform.position));
+            StartCoroutine(GravityCheckPause(selector2.transform.position));
         }
     }
 
     IEnumerator HorizontalCheckMicroPause(GameObject _movedPanel)
     {
         yield return new WaitForSeconds(0.05f);
-        FullLineChack(_movedPanel);
-        yield return new WaitForSeconds(0.05f);
-        GravityCheck();
+        FullLineCheck(_movedPanel);
     }
     IEnumerator VerticalCheckMicroPause(GameObject _movedPanel)
     {
@@ -156,7 +198,7 @@ public class BaseGameplay : MonoBehaviour
         //GravityCheck();
     }
 
-    private void FullLineChack(GameObject movedPanel)
+    private void FullLineCheck(GameObject movedPanel)
     {
         int counter = 0;
         List<GameObject> toDestroy = new List<GameObject>();
@@ -211,10 +253,12 @@ public class BaseGameplay : MonoBehaviour
                 toDestroy.Add(panel);
             }
         }
-
+        
+        //List<Vector3> panelToDestroyPositions = new List<Vector3>();
         foreach (GameObject panel in toDestroy)
         {
             m_panelsOnScreen.Remove(panel);
+            StartCoroutine(GravityCheckPause(panel.transform.position));
             Destroy(panel);
         }
     }
@@ -240,6 +284,7 @@ public class BaseGameplay : MonoBehaviour
             Collider2D skibidi = Physics2D.OverlapPoint(new Vector2(movedPanel.transform.position.x, firstPanelInColumnY + i));
 
             //Instantiate(testObject, new Vector3(movedPanel.transform.position.x, firstPanelInColumnY + i, 0), Quaternion.identity);
+            
 
             if (skibidi != null && skibidi.gameObject.CompareTag(tagToRemember))
             {
@@ -278,30 +323,85 @@ public class BaseGameplay : MonoBehaviour
             }
         }
 
-        foreach (GameObject panel in toDestroy)
+        if(toDestroy.Count != 0)
         {
-            m_panelsOnScreen.Remove(panel);
-            Destroy(panel);
+            Vector3 panelPosition = toDestroy[0].transform.position;
+            foreach (GameObject panel in toDestroy)
+            {
+                m_panelsOnScreen.Remove(panel);
+                Destroy(panel);
+            }
+            StartCoroutine(GravityCheckPause(panelPosition));
         }
     }
-    
-    private void GravityCheck()
+
+
+    IEnumerator GravityCheckPause(Vector3 felixDestroy)
     {
-        List<GameObject> panelsOnScreenReversed = m_panelsOnScreen;
-        foreach (GameObject panel in panelsOnScreenReversed)
+        yield return new WaitForSeconds(0.05f);
+        GravityCheck2(felixDestroy);
+    }
+
+    private void GravityCheck2(Vector3 felixDestroy)
+    {
+        //Find Affected Panels
+        Vector2 felixVector2 = felixDestroy;
+        List<GameObject> panelsToGravify = new List<GameObject>();
+
+        RaycastHit2D panelAboveMovedPanel = Physics2D.Raycast(felixVector2, new Vector2(0, 1));
+        
+        if (panelAboveMovedPanel)
         {
-            bool isOnFloor = false;
-            while(!isOnFloor)
+            GameObject panelToCheckAbove = panelAboveMovedPanel.collider.gameObject;
+            panelsToGravify.Add(panelToCheckAbove);
+            bool isPanelAbove = true;
+            for(int i = 0; i < m_numberofVerticalPanels && isPanelAbove; i++)
             {
-                Collider2D skibidi = Physics2D.OverlapPoint(new Vector2(panel.transform.position.x, panel.transform.position.y - 1));
-                if(!skibidi)
+                Collider2D panelAbovePanelAboveMovedPanel = Physics2D.OverlapPoint(new Vector2(panelToCheckAbove.transform.position.x, panelToCheckAbove.transform.position.y + 1));
+                if (panelAbovePanelAboveMovedPanel)
                 {
-                    panel.transform.position = panel.transform.position + new Vector3(0, -1, 0);
+                    panelToCheckAbove = panelAbovePanelAboveMovedPanel.gameObject;
+                    panelsToGravify.Add(panelToCheckAbove);
                 }
                 else
-                    isOnFloor = true;
+                {
+                    isPanelAbove = false;
+                }
             }
+        }
+
+        //"Apply" Gravity
+        List<GameObject> panelsMoved = new List<GameObject>();
+
+        foreach (GameObject panel in panelsToGravify)
+        {
+            bool isOnFloor = false;
+            while (!isOnFloor)
+            {
+                //Previously Used a Collider -> Is it better ?
+                foreach(GameObject panelInGame in m_panelsOnScreen)
+                {
+                    if(panel.transform.position + new Vector3(0, -1, 0) == panelInGame.transform.position || panel.transform.position.y - 1 <= m_leftSpawnPoint.position.y)
+                    {
+                        isOnFloor = true;
+                        break;
+                    }
+                }
+                //Instantiate(testObject, panel.transform.position + new Vector3(0, -1, 0), Quaternion.identity);
+
+                if (!isOnFloor)
+                {
+                    panel.transform.position = panel.transform.position + new Vector3(0, -1, 0);
+                    panelsMoved.Add(panel);
+                }
+            }
+            //panel.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.05f);
+        }
+        
+        foreach (GameObject panel in panelsMoved)
+        {
+            StartCoroutine(VerticalCheckMicroPause(panel));
+            StartCoroutine(HorizontalCheckMicroPause(panel));
         }
     }
 }
-
