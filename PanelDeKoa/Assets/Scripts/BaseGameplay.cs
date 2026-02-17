@@ -4,18 +4,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
-using static UnityEngine.Rendering.DebugUI;
 
 enum PanelColours
 {
     Red,
     Green, 
     Blue,
-    DarkBlue,
-    Purple,
     Yellow,
+    Purple,
+    DarkBlue,
     None
-}
+};
+
+public struct Position
+{
+    public int vertical;
+    public int horizontal;
+
+    public Position(int verticalInput, int horizontalInput) : this()
+    {
+        this.vertical = verticalInput;
+        this.horizontal = horizontalInput;
+    }
+};
 
 public class BaseGameplay : MonoBehaviour
 {
@@ -29,8 +40,8 @@ public class BaseGameplay : MonoBehaviour
     [SerializeField] private float m_verticalLimitUp;
     [SerializeField] private float m_verticalLimitDown;
 
+
     //Test
-    /*
     private PanelColours[,] gameBoard =
     {
         {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
@@ -46,7 +57,9 @@ public class BaseGameplay : MonoBehaviour
         {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
         {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None}
     };
-    */
+    private Position m_selector1Pos;
+    private Position m_selector2Pos;
+ 
 
     const int m_numberOfPixels = 16;
 
@@ -61,6 +74,10 @@ public class BaseGameplay : MonoBehaviour
 
     void Start()
     {
+        m_selector1Pos.vertical = 12;
+        m_selector1Pos.horizontal = 4;
+        m_selector2Pos.vertical = 12;
+        m_selector2Pos.horizontal = 5;
         SpawnLine();
         StartCoroutine(MovementTimer());
     }
@@ -98,6 +115,7 @@ public class BaseGameplay : MonoBehaviour
             }
         }
         SwapTwoPanels(panelToSwap1, panelToSwap2);
+        SwapPanelsArray();
     }
 
     void OnMove(InputValue value)
@@ -114,18 +132,83 @@ public class BaseGameplay : MonoBehaviour
             selector1.transform.position = selector1.transform.position + new Vector3(xMovement, yMovement, 0);
             selector2.transform.position = selector2.transform.position + new Vector3(xMovement, yMovement, 0);
         }
+
+        yMovement = -yMovement;
+
+        if (m_selector1Pos.vertical + (int)yMovement >= 0 && m_selector1Pos.vertical + (int)yMovement < m_numberofVerticalPanels
+            && m_selector1Pos.horizontal + (int)xMovement >= 0 && m_selector1Pos.horizontal + (int)xMovement < m_numberofHorizontalPanels)
+        {
+            m_selector1Pos.horizontal += (int)xMovement;
+            m_selector2Pos.horizontal += (int)xMovement;
+            m_selector1Pos.vertical += (int)yMovement;
+            m_selector2Pos.vertical += (int)yMovement;
+            
+        }
     }
 
     private void SpawnLine()
     {
+        MoveArrayUp();
         for (int tileSpawnedCounter = 0; tileSpawnedCounter < m_numberofHorizontalPanels; tileSpawnedCounter++)
         {
             Vector3 spawnPosition = new Vector3(m_leftSpawnPoint.position.x + tileSpawnedCounter, m_leftSpawnPoint.position.y, m_leftSpawnPoint.position.z);
             int randomPanelToSpawn = Random.Range(0, m_panelArray.Length);
 
+            gameBoard[11, tileSpawnedCounter] = ColourEnumToInt(randomPanelToSpawn);
 
             GameObject spawnedPanel = Instantiate(m_panelArray[randomPanelToSpawn], spawnPosition, Quaternion.identity);
             m_panelsOnScreen.Add(spawnedPanel);
+        }
+        
+        for(int i = 0; i < m_numberofVerticalPanels; i++)
+        {
+            Debug.Log(gameBoard[i, 0] + " " + gameBoard[i, 1] + " " + gameBoard[i, 2] + " " + gameBoard[i, 3] + " " + gameBoard[i, 4] + " " + gameBoard[i, 5]);
+        }
+        Debug.Log("                                                   ");
+        
+        Debug.Log(" " + m_selector1Pos.horizontal + " " + m_selector1Pos.vertical + " " + m_selector2Pos.horizontal + " " + m_selector2Pos.vertical);
+    }
+
+    private PanelColours ColourEnumToInt(int index)
+    {
+        switch (index)
+        {
+            case 0: return PanelColours.Red;
+            case 1: return PanelColours.Green;
+            case 2: return PanelColours.Blue;
+            case 3: return PanelColours.Purple;
+            case 4: return PanelColours.Yellow;
+            case 5: return PanelColours.DarkBlue;
+            case 6: return PanelColours.None;
+            default:
+                break;
+        }
+        return PanelColours.None;
+    }
+
+    private void MoveArrayUp()
+    {
+        for (int k = 0; k < m_numberofHorizontalPanels; k++)
+        {
+            if (gameBoard[0,k] != PanelColours.None)
+            {
+                Debug.Log("You Lost");
+                Time.timeScale = 0;
+                return;
+            }
+        }
+
+        for (int i = 1; i < m_numberofVerticalPanels; i++)
+        {
+            for (int j = 0; j < m_numberofHorizontalPanels; j++)
+            {
+                gameBoard[i - 1, j] = gameBoard[i, j];
+            }
+        }
+        if(m_selector1Pos.vertical > 0)
+        {
+            m_selector1Pos.vertical--;
+            m_selector2Pos.vertical--;
         }
     }
 
@@ -160,30 +243,46 @@ public class BaseGameplay : MonoBehaviour
         else if(Panel1 == null)
         {
             Panel2.transform.position = new Vector3(selector1.transform.position.x, selector1.transform.position.y, Panel2.transform.position.z);
-            StartCoroutine(HorizontalCheckMicroPause(Panel2));
-            StartCoroutine(VerticalCheckMicroPause(Panel2));
             StartCoroutine(GravityCheckPause(selector2.transform.position));
             StartCoroutine(GravityCheckPause(selector1.transform.position));
+            StartCoroutine(HorizontalCheckMicroPause(Panel2));
+            StartCoroutine(VerticalCheckMicroPause(Panel2));
         }
         else if(Panel2 == null)
         {
             Panel1.transform.position = new Vector3(selector2.transform.position.x, selector2.transform.position.y, Panel1.transform.position.z);
-            StartCoroutine(HorizontalCheckMicroPause(Panel1));
-            StartCoroutine(VerticalCheckMicroPause(Panel1));
             StartCoroutine(GravityCheckPause(selector2.transform.position));
             StartCoroutine(GravityCheckPause(selector1.transform.position));
+            StartCoroutine(HorizontalCheckMicroPause(Panel1));
+            StartCoroutine(VerticalCheckMicroPause(Panel1));
         }
         else
         {
             Vector3 tempPositionForSwap = Panel1.transform.position;
             Panel1.transform.position = Panel2.transform.position;
             Panel2.transform.position = tempPositionForSwap;
+            StartCoroutine(GravityCheckPause(selector1.transform.position));
+            StartCoroutine(GravityCheckPause(selector2.transform.position));
             StartCoroutine(VerticalCheckMicroPause(Panel2));
             StartCoroutine(VerticalCheckMicroPause(Panel1));
             StartCoroutine(HorizontalCheckMicroPause(Panel1));
-            StartCoroutine(GravityCheckPause(selector1.transform.position));
-            StartCoroutine(GravityCheckPause(selector2.transform.position));
         }
+    }
+
+    private void SwapPanelsArray()
+    {
+        //Swaps Panels Under Both Selectors in the Array
+        PanelColours buffer = new PanelColours();
+        buffer = gameBoard[m_selector1Pos.vertical, m_selector1Pos.horizontal];
+        gameBoard[m_selector1Pos.vertical, m_selector1Pos.horizontal] = gameBoard[m_selector2Pos.vertical, m_selector2Pos.horizontal];
+        gameBoard[m_selector2Pos.vertical, m_selector2Pos.horizontal] = buffer;
+
+        //Checks for any cleared Panel
+        GravityCheckArray(m_selector2Pos);
+        GravityCheckArray(m_selector1Pos);
+        ArrayLineCheck(m_selector1Pos);
+        ArrayColumnCheck(m_selector1Pos);
+        ArrayColumnCheck(m_selector2Pos);
     }
 
     IEnumerator HorizontalCheckMicroPause(GameObject _movedPanel)
@@ -335,6 +434,89 @@ public class BaseGameplay : MonoBehaviour
         }
     }
 
+    private void ArrayColumnCheck(Position checkOrigin)
+    {
+        int counter = 1;
+        List<Position> toDestroy = new List<Position>();
+        List<Position> toDestroyTemp = new List<Position>();
+
+        //Loops the Whole Column to Check for Cleared Panels
+        for (int verticalIndex = 0; verticalIndex < m_numberofVerticalPanels - 1; verticalIndex++)
+        {
+            if (gameBoard[verticalIndex, checkOrigin.horizontal] == gameBoard[verticalIndex + 1, checkOrigin.horizontal])
+            {
+                counter++;
+                toDestroyTemp.Add(new Position(verticalIndex, checkOrigin.horizontal));
+            }
+            else
+            {
+                //When at Least 3 Panels are Aligned -> Add them to the Destroy Array
+                if (counter >= 3)
+                {
+                    toDestroyTemp.Add(new Position(verticalIndex, checkOrigin.horizontal));
+
+                    foreach (Position panelPosition in toDestroyTemp)
+                    {
+                        toDestroy.Add(panelPosition);
+                    }
+                }
+                counter = 1;
+                toDestroyTemp.Clear();
+            }
+        }
+
+        if (toDestroy.Count > 0)
+        {
+            //"Destroy" Everything in the Destroy Array
+            foreach (Position panelPosition in toDestroy)
+            {
+                gameBoard[panelPosition.vertical, panelPosition.horizontal] = PanelColours.None;
+            }
+            GravityCheckArray(checkOrigin);
+        }
+    }
+
+    private void ArrayLineCheck(Position checkOrigin)
+    {
+        int counter = 1;
+        List<Position> toDestroy = new List<Position>();
+        List<Position> toDestroyTemp = new List<Position>();
+
+        //Loops the Whole Row to Check for Cleared Panels
+        for (int horizontalIndex = 0; horizontalIndex < m_numberofHorizontalPanels - 1; horizontalIndex++)
+        {
+            if (gameBoard[checkOrigin.vertical, horizontalIndex] == gameBoard[checkOrigin.vertical, horizontalIndex + 1])
+            {
+                counter ++;
+                toDestroyTemp.Add(new Position(checkOrigin.vertical, horizontalIndex));
+            }
+            else
+            {
+                //When at Least 3 Panels are Aligned -> Add them to the Destroy Array
+                if (counter >= 3)
+                {
+                    toDestroyTemp.Add(new Position(checkOrigin.vertical, horizontalIndex));
+
+                    foreach (Position panelPosition in toDestroyTemp)
+                    {
+                        toDestroy.Add(panelPosition);
+                    }
+                }
+                counter = 1;
+                toDestroyTemp.Clear();
+            }
+        }
+
+        if (toDestroy.Count > 0)
+        {
+            //"Destroy" Everything in the Destroy Array
+            foreach (Position panelPosition in toDestroy)
+            {
+                gameBoard[panelPosition.vertical, panelPosition.horizontal] = PanelColours.None;
+                GravityCheckArray(panelPosition);
+            }
+        }
+    }
 
     IEnumerator GravityCheckPause(Vector3 felixDestroy)
     {
@@ -387,7 +569,6 @@ public class BaseGameplay : MonoBehaviour
                         break;
                     }
                 }
-                //Instantiate(testObject, panel.transform.position + new Vector3(0, -1, 0), Quaternion.identity);
 
                 if (!isOnFloor)
                 {
@@ -395,13 +576,60 @@ public class BaseGameplay : MonoBehaviour
                     panelsMoved.Add(panel);
                 }
             }
-            //panel.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.05f);
         }
         
         foreach (GameObject panel in panelsMoved)
         {
             StartCoroutine(VerticalCheckMicroPause(panel));
             StartCoroutine(HorizontalCheckMicroPause(panel));
+        }
+    }
+
+    private void GravityCheckArray(Position felixPos)
+    {
+        List<int> panelsToGravify = new List<int>();
+        for (int verticalIndex = m_numberofVerticalPanels - 2; verticalIndex > 0; verticalIndex--)
+        {
+            if(gameBoard[verticalIndex, felixPos.horizontal] != PanelColours.None)
+            {
+                panelsToGravify.Add(verticalIndex);
+            }
+        }
+
+        List<int> panelsMoved = new List<int>();
+        foreach (int panelVerticalPos in panelsToGravify)
+        {
+            Debug.Log("Vertical : " + panelVerticalPos);
+            bool isOnFloor = false;
+            bool hasMoved = false;
+            int height = panelVerticalPos;
+
+            while(!isOnFloor)
+            {
+                height++;
+                if (height < m_numberofVerticalPanels - 1 && gameBoard[height, felixPos.horizontal] == PanelColours.None)
+                {
+                    gameBoard[height, felixPos.horizontal] = gameBoard[height - 1, felixPos.horizontal];
+                    gameBoard[height - 1, felixPos.horizontal] = PanelColours.None;
+                    hasMoved = true;
+                }
+                else
+                {
+                    if(hasMoved)
+                    {
+                        panelsMoved.Add(height);
+                    }
+                    isOnFloor = true;
+                }
+            }
+        }
+        if(panelsMoved.Count > 0)
+        {
+            foreach(int panelVerticalPos in panelsMoved)
+            {
+                ArrayColumnCheck(new Position(panelVerticalPos, felixPos.horizontal));
+                ArrayLineCheck(new Position(panelVerticalPos, felixPos.horizontal));
+            }
         }
     }
 }
