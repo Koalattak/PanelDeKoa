@@ -609,10 +609,13 @@ MonoBehaviour:
   - {fileID: 5739721348381987332, guid: 3d77cc31de4150e4fbdc6fa5a5ecb49c, type: 3}
   - {fileID: 5739721348381987332, guid: ef116b1908df278459ea87c6cb08d24b, type: 3}
   - {fileID: 5739721348381987332, guid: e3d67cdc0249ea74cb676924ff901159, type: 3}
+  - {fileID: 5739721348381987332, guid: d7abdf1e853bf5c4b9c29d37d699828d, type: 3}
+  - {fileID: 5739721348381987332, guid: 82bd367f549952743bd79d53485a5547, type: 3}
+  - {fileID: 5739721348381987332, guid: 1b762e8650c9d1e42b4ec6df6c896aeb, type: 3}
+  - {fileID: 5739721348381987332, guid: 735546f0165b7134fa75b78451b4d4e3, type: 3}
   m_leftSpawnPoint: {fileID: 282047527}
-  m_numberofHorizontalPanels: 6
-  m_numberofVerticalPanels: 12
-  m_moveTime: 0.2
+  m_normalMoveTime: 0.2
+  m_fastMoveTime: 0.1
   m_horizontalLimits: -3
   m_verticalLimitUp: 5.5
   m_verticalLimitDown: -5.5

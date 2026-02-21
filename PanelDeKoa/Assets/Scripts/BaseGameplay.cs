@@ -34,7 +34,9 @@ public class BaseGameplay : MonoBehaviour
     [SerializeField] private Transform m_leftSpawnPoint;
     [SerializeField] const int m_numberofHorizontalPanels = 6;
     [SerializeField] const int m_numberofVerticalPanels = 12;
-    [SerializeField] private float m_moveTime;
+    private float m_moveTime;
+    [SerializeField] private float m_normalMoveTime;
+    [SerializeField] private float m_fastMoveTime;
 
     [SerializeField] private float m_horizontalLimits;
     [SerializeField] private float m_verticalLimitUp;
@@ -42,6 +44,7 @@ public class BaseGameplay : MonoBehaviour
 
 
     //Test
+    private List<GameObject> m_panelsScreenInArray = new List<GameObject>();
     private PanelColours[,] gameBoard =
     {
         {PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None, PanelColours.None},
@@ -74,6 +77,7 @@ public class BaseGameplay : MonoBehaviour
 
     void Start()
     {
+        m_moveTime = m_normalMoveTime;
         m_selector1Pos.vertical = 12;
         m_selector1Pos.horizontal = 4;
         m_selector2Pos.vertical = 12;
@@ -82,7 +86,6 @@ public class BaseGameplay : MonoBehaviour
         StartCoroutine(MovementTimer());
     }
 
-    // Update is called once per frame
     void Update()
     {
         if(selector1.transform.position.y > m_verticalLimitUp)
@@ -92,6 +95,10 @@ public class BaseGameplay : MonoBehaviour
         }
     }
 
+    private void OnSpeedUp()
+    {
+        m_moveTime = m_fastMoveTime;
+    }
     private void OnSwap()
     {
         GameObject panelToSwap1 = null;
@@ -152,12 +159,14 @@ public class BaseGameplay : MonoBehaviour
         for (int tileSpawnedCounter = 0; tileSpawnedCounter < m_numberofHorizontalPanels; tileSpawnedCounter++)
         {
             Vector3 spawnPosition = new Vector3(m_leftSpawnPoint.position.x + tileSpawnedCounter, m_leftSpawnPoint.position.y, m_leftSpawnPoint.position.z);
-            int randomPanelToSpawn = Random.Range(0, m_panelArray.Length);
+            int randomPanelToSpawn = Random.Range(0, m_panelArray.Length - 1);
 
-            gameBoard[11, tileSpawnedCounter] = ColourEnumToInt(randomPanelToSpawn);
+            gameBoard[11, tileSpawnedCounter] = IntToColourEnum(randomPanelToSpawn);
 
             GameObject spawnedPanel = Instantiate(m_panelArray[randomPanelToSpawn], spawnPosition, Quaternion.identity);
             m_panelsOnScreen.Add(spawnedPanel);
+
+            spawnedPanel.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.2f);
         }
         
         for(int i = 0; i < m_numberofVerticalPanels; i++)
@@ -167,9 +176,10 @@ public class BaseGameplay : MonoBehaviour
         Debug.Log("                                                   ");
         
         Debug.Log(" " + m_selector1Pos.horizontal + " " + m_selector1Pos.vertical + " " + m_selector2Pos.horizontal + " " + m_selector2Pos.vertical);
+        ShowGame();
     }
 
-    private PanelColours ColourEnumToInt(int index)
+    private PanelColours IntToColourEnum(int index)
     {
         switch (index)
         {
@@ -186,11 +196,28 @@ public class BaseGameplay : MonoBehaviour
         return PanelColours.None;
     }
 
+    private int ColourEnumToInt(PanelColours colour)
+    {
+        switch (colour)
+        {
+            case PanelColours.Red: return 0;
+            case PanelColours.Green: return 1;
+            case PanelColours.Blue: return 2;
+            case PanelColours.Purple: return 3;
+            case PanelColours.Yellow: return 4;
+            case PanelColours.DarkBlue: return 5;
+            case PanelColours.None: return 6;
+            default:
+                break;
+        }
+        return 6;
+    }
+
     private void MoveArrayUp()
     {
         for (int k = 0; k < m_numberofHorizontalPanels; k++)
         {
-            if (gameBoard[0,k] != PanelColours.None)
+            if (gameBoard[0, k] != PanelColours.None)
             {
                 Debug.Log("You Lost");
                 Time.timeScale = 0;
@@ -225,7 +252,7 @@ public class BaseGameplay : MonoBehaviour
             SpawnLine();
             m_pixelsMovedUp = 0;
         }
-        foreach(GameObject panel in m_panelsOnScreen)
+        foreach(GameObject panel in m_panelsScreenInArray)
         {
             panel.transform.position = panel.transform.position + new Vector3(0, panel.transform.localScale.y/m_numberOfPixels, 0);
         }
@@ -283,6 +310,8 @@ public class BaseGameplay : MonoBehaviour
         ArrayLineCheck(m_selector1Pos);
         ArrayColumnCheck(m_selector1Pos);
         ArrayColumnCheck(m_selector2Pos);
+
+        ShowGame();
     }
 
     IEnumerator HorizontalCheckMicroPause(GameObject _movedPanel)
@@ -629,6 +658,27 @@ public class BaseGameplay : MonoBehaviour
             {
                 ArrayColumnCheck(new Position(panelVerticalPos, felixPos.horizontal));
                 ArrayLineCheck(new Position(panelVerticalPos, felixPos.horizontal));
+            }
+        }
+    }
+
+    private void ShowGame()
+    {
+        foreach(GameObject panel in m_panelsScreenInArray)
+        {
+            Destroy(panel);
+        }
+        m_panelsScreenInArray.Clear();
+
+        for(int verticalIndex = 0; verticalIndex < m_numberofVerticalPanels; verticalIndex++)
+        {
+            for(int horizontalIndex = 0; horizontalIndex < m_numberofHorizontalPanels; horizontalIndex++)
+            {
+                GameObject spawnedPanel = Instantiate(m_panelArray[ColourEnumToInt(gameBoard[verticalIndex, horizontalIndex])], 
+                    m_leftSpawnPoint.position + new Vector3(horizontalIndex, m_numberofVerticalPanels - verticalIndex - 1, 0), m_leftSpawnPoint.rotation);
+
+                spawnedPanel.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1f);
+                m_panelsScreenInArray.Add(spawnedPanel);
             }
         }
     }

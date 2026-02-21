@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 7110421832234789828}
   - component: {fileID: 3057038684600838087}
-  - component: {fileID: -3796013925479331873}
+  - component: {fileID: -1402619714166395312}
   m_Layer: 0
-  m_Name: PanelBlue
-  m_TagString: PanelBlue
+  m_Name: PanelYellow
+  m_TagString: PanelYellow
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 167896735, guid: fd8fbd660befad3468def121624bdc42, type: 3}
+  m_Sprite: {fileID: -1890860641, guid: fd8fbd660befad3468def121624bdc42, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -92,7 +92,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!61 &-3796013925479331873
+--- !u!61 &-1402619714166395312
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

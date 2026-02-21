@@ -8,6 +8,9 @@ TagManager:
   - PanelBlue
   - PanelGreen
   - Nothing
+  - PanelDarkBlue
+  - PanelPurple
+  - PanelYellow
   layers:
   - Default
   - TransparentFX

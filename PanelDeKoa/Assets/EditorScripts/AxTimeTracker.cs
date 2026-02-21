@@ -82,7 +82,7 @@ public class ProjectTimeTracker
 
         Handles.BeginGUI();
         TimeSpan timeSpan = TimeSpan.FromSeconds(totalTime);
-        int hours = (int)timeSpan.Hours;
+        int hours = (int)timeSpan.Hours + (int)timeSpan.Days * 24;
         string timeText = $"Time Spent: {hours}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
 
         GUIStyle style = new GUIStyle();
@@ -305,7 +305,7 @@ public class TimeTrackerOptionsWindow : EditorWindow
 
         GUILayout.Label("Total Time Spent:", EditorStyles.boldLabel);
         TimeSpan totalTimeSpan = ProjectTimeTracker.GetTotalTimeSpan();
-        GUILayout.Label($"Hours: {totalTimeSpan.Hours:D2} | Minutes: {totalTimeSpan.Minutes:D2} | Seconds: {totalTimeSpan.Seconds:D2}");
+        GUILayout.Label($"Hours: {totalTimeSpan.Hours + totalTimeSpan.Days * 24:D2} | Minutes: {totalTimeSpan.Minutes:D2} | Seconds: {totalTimeSpan.Seconds:D2}");
 
         GUILayout.FlexibleSpace();
 
