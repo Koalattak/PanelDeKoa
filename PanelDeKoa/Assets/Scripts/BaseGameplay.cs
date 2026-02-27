@@ -244,8 +244,8 @@ public class BaseGameplay : MonoBehaviour
         //Checks if it is Time to Spawn a new Line
         if (m_pixelsMovedUp >= m_numberOfPixels)
         {
-            SpawnLine();
             m_pixelsMovedUp = 0;
+            SpawnLine();
         }
 
         //Move Up by One Pixel
@@ -456,8 +456,10 @@ public class BaseGameplay : MonoBehaviour
         {
             for(int horizontalIndex = 0; horizontalIndex < m_numberofHorizontalPanels; horizontalIndex++)
             {
+                float spawnHeight = m_numberofVerticalPanels - verticalIndex - 1 + ((float)m_pixelsMovedUp / m_numberOfPixels);
+
                 GameObject spawnedPanel = Instantiate(m_panelArray[ColourEnumToInt(gameBoard[verticalIndex, horizontalIndex])], 
-                    m_leftSpawnPoint.position + new Vector3(horizontalIndex, m_numberofVerticalPanels - verticalIndex - 1, 0), m_leftSpawnPoint.rotation);
+                    m_leftSpawnPoint.position + new Vector3(horizontalIndex, spawnHeight, 0), m_leftSpawnPoint.rotation);
 
                 spawnedPanel.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1f);
                 m_panelsScreenInArray.Add(spawnedPanel);
